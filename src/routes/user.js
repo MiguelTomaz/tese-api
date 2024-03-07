@@ -33,7 +33,7 @@ router.route('/users').post((request,response)=>{
         response.status(500).json({ error: 'Ocorreu um erro ao adicionar o usuário.' });
     }
 })
-
+/** 
 router.route('/login').post(async (request, response) => {
     const { email, password } = request.body; // Supondo que as credenciais sejam enviadas no corpo da solicitação
 
@@ -49,6 +49,30 @@ router.route('/login').post(async (request, response) => {
         // Verifica se as credenciais são válidas
         if (isValidCredentials) {
             return response.status(200).json({ message: 'Login bem-sucedido.' });
+        } else {
+            return response.status(401).json({ error: 'Credenciais inválidas. Login falhou.', email: email, password: password });
+        }
+    } catch (error) {
+        console.log(error);
+        return response.status(500).json({ error: 'Ocorreu um erro ao processar o login.' });
+    }
+});
+*/
+router.route('/login').get(async (request, response) => {
+    const { email, password } = request.body; // Extrai email e password dos parâmetros da URL
+
+    // Verifica se o nome de usuário e a senha foram fornecidos
+    if (!email || !password) {
+        return response.status(400).json({ error: 'email e senha são obrigatórios.' });
+    }
+
+    try {
+        // Chama a função de verificar as credenciais para verificar se as credenciais existem no banco de dados
+        const isValidCredentials = await userController.verifyUserCredentials(email, password);
+        
+        // Verifica se as credenciais são válidas
+        if (isValidCredentials.isValid) {
+            return response.status(200).json({ message: 'Login bem-sucedido, com id: ' + isValidCredentials.touristId, touristId: isValidCredentials.touristId});
         } else {
             return response.status(401).json({ error: 'Credenciais inválidas. Login falhou.', email: email, password: password });
         }

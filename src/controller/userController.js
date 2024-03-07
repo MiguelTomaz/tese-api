@@ -59,17 +59,20 @@ async function verifyUserCredentials(email, password) {
         // Consulta para verificar se o usuário existe e obter sua senha
         let result = await pool.request()
             .input('email', sql.NVarChar, email)
-            .query('SELECT password FROM Tourist WHERE email = @email');
+            .query('SELECT id, password FROM Tourist WHERE email = @email');
 
         // Verifica se o usuário existe
         if (result.recordset.length == 0) {
             return false; // Usuário não existe
         }
         const storedPassword = result.recordset[0].password;
+        const touristId = result.recordset[0].id;
+        console.log('userId', touristId);
+
         if(password == storedPassword) {
-            return true;
+            return { isValid: true, touristId: touristId }
         }
-        return false;
+        return { isValid: false };
 
     } catch (error) {
         console.error(error);
