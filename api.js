@@ -4,6 +4,7 @@ var Db  = require('./dboperations');
 var User = require('./src/Models/User');
 var Questions = require('./src/Models/Questions');
 var Quiz = require('./src/Models/Quiz')
+var Photo = require('./src/Models/Photo')
 
 var express = require("express");
 var bodyParser = require('body-parser');
@@ -13,22 +14,23 @@ var cors = require('cors');
 const userRoute = require('./src/routes/user');
 const questionsRoute = require('./src/routes/questions');
 const quizRoute = require('./src/routes/quiz');
+const photoRoute = require('./src/routes/photo');
 
 var app = express();
-app.use(bodyParser.json());
+app.use(bodyParser.json({limit: '50000000000mb'}));
+app.use(bodyParser.urlencoded({limit: '50000000000mb', extended: true}));
 
 //var router = express.Router();
 
 const bcrypt = require('bcrypt');
 
 
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json());
+
 app.use(cors());
 app.use('/api/user', userRoute);
 app.use('/api/questions', questionsRoute);
 app.use('/api/quiz', quizRoute);
-
+app.use('/api/photo', photoRoute);
 /**
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
