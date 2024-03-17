@@ -28,11 +28,17 @@ async function addPhoto(photo) {
 
                 if (result.recordset && result.recordset.length > 0) {
                     touristId = result.recordset[0].tourist_id;
-
+                    
+                     // Adicionar à galeria do user
                     await pool.request()
                     .input('photo_id', sql.Int, insertedId)
                     .input('tourist_id', sql.Int, touristId)
                     .query('INSERT INTO Gallery (photo_id, tourist_id) VALUES (@photo_id, @tourist_id)');
+
+                    // Adicionar à comunidade geral
+                    await pool.request()
+                    .input('photo_id', sql.Int, insertedId)
+                    .query('INSERT INTO Community (photo_id, photo_likes) VALUES (@photo_id, 0)');
 
                     return { id: insertedId, touristId: touristId };
                 }
@@ -82,7 +88,41 @@ async function getGallery(touristId) {
     }
 }
 
+async function getCommunity() {
+    try {
+        let pool = await sql.connect(config);
+
+        // Obtém todas as fotos da comunidade com o número de likes
+        let result = await pool.request()
+            .query(`
+                SELECT 
+                    Photo.*, 
+                    Community.photo_likes,
+                    Tourist.email
+                FROM 
+                    Photo 
+                INNER JOIN 
+                    Community ON Photo.id = Community.photo_id
+                INNER JOIN 
+                    Touristic_Route ON Photo.tourist_route_association_id = Touristic_Route.id
+                INNER JOIN 
+                    Tourist ON Touristic_Route.tourist_id = Tourist.id
+            `);
+
+        // Verifica se há resultados retornados pela query
+        if (result.recordset) {
+            return result.recordset;
+        } else {
+            throw new Error('Failed to fetch community: no photos found.');
+        }
+    } catch (error) {
+        console.log(error);
+        throw new Error('Failed to fetch community.');
+    }
+}
+
   module.exports = {
     addPhoto: addPhoto,
-    getGallery: getGallery
+    getGallery: getGallery,
+    getCommunity: getCommunity
 }

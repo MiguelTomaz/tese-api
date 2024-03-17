@@ -34,4 +34,15 @@ router.route('/gallery/:touristId').get(async (req, res) => {
     }
 });
 
+router.route('/community').get(async (req, res) => {
+    try {
+        const community = await photoController.getCommunity();
+        res.status(200).json(community);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Falha ao buscar a galeria do turista.' });
+    }
+});
+
+
 module.exports = router;
