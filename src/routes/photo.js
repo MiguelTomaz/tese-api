@@ -44,5 +44,48 @@ router.route('/community').get(async (req, res) => {
     }
 });
 
+router.route('/community/like').post(async (req, res) => {
+    const { touristId, photoId } = req.body;
+
+    // Verifica se os IDs da foto e do turista estão presentes
+    if (!touristId || !photoId) {
+        return res.status(400).json({ error: 'Os IDs da foto e do turista são obrigatórios.' });
+    }
+
+    try {
+        // Adiciona o "like" à foto da comunidade
+        const { tourist_id, photo_id, likes } = await photoController.likePhoto(touristId, photoId);
+        //const message = await photoController.likePhoto(touristId, photoId);
+        res.status(201).json({  message: 'Like adicionado com sucesso pelo turista: ' + tourist_id + " à foto da comunidade " + photo_id + ", que agora tem " + likes + " likes", 
+        touristId: touristId,
+        photo_id: photo_id,
+    likes: likes });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Falha ao adicionar o like à foto da comunidade.' });
+    }
+});
+
+router.route('/community/dislike').post(async (req, res) => {
+    const { touristId, photoId } = req.body;
+
+    // Verifica se os IDs da foto e do turista estão presentes
+    if (!touristId || !photoId) {
+        return res.status(400).json({ error: 'Os IDs da foto e do turista são obrigatórios.' });
+    }
+
+    try {
+        // Adiciona o "like" à foto da comunidade
+        const { tourist_id, photo_id, likes } = await photoController.removeLike(touristId, photoId);
+        //const message = await photoController.likePhoto(touristId, photoId);
+        res.status(201).json({  message: 'Like removido com sucesso pelo turista: ' + tourist_id + " à foto da comunidade " + photo_id + ", que agora tem " + likes + " likes", 
+        touristId: touristId,
+        photo_id: photo_id,
+    likes: likes });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Falha ao adicionar o like à foto da comunidade.' });
+    }
+});
 
 module.exports = router;
