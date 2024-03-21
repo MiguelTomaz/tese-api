@@ -54,19 +54,20 @@ router.route('/community/like').post(async (req, res) => {
 
     try {
         // Adiciona o "like" à foto da comunidade
-        const { tourist_id, photo_id, likes } = await photoController.likePhoto(touristId, photoId);
+        const { message, tourist_id, photo_id, likes, like } = await photoController.likePhoto(touristId, photoId);
         //const message = await photoController.likePhoto(touristId, photoId);
-        res.status(201).json({  message: 'Like adicionado com sucesso pelo turista: ' + tourist_id + " à foto da comunidade " + photo_id + ", que agora tem " + likes + " likes", 
+        res.status(201).json({  message, 
         touristId: touristId,
         photo_id: photo_id,
-    likes: likes });
+    likes: likes,
+    like: like });
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Falha ao adicionar o like à foto da comunidade.' });
     }
 });
 
-router.route('/community/dislike').post(async (req, res) => {
+router.route('/community/like/check').post(async (req, res) => {
     const { touristId, photoId } = req.body;
 
     // Verifica se os IDs da foto e do turista estão presentes
@@ -75,16 +76,14 @@ router.route('/community/dislike').post(async (req, res) => {
     }
 
     try {
-        // Adiciona o "like" à foto da comunidade
-        const { tourist_id, photo_id, likes } = await photoController.removeLike(touristId, photoId);
-        //const message = await photoController.likePhoto(touristId, photoId);
-        res.status(201).json({  message: 'Like removido com sucesso pelo turista: ' + tourist_id + " à foto da comunidade " + photo_id + ", que agora tem " + likes + " likes", 
-        touristId: touristId,
-        photo_id: photo_id,
-    likes: likes });
+        // Verifica se o turista deu like na foto
+        const liked = await photoController.checkIfLikedPhoto(touristId, photoId);
+        
+        // Retorna se o turista deu like na foto ou não
+        res.status(200).json({ liked });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ error: 'Falha ao adicionar o like à foto da comunidade.' });
+        res.status(500).json({ error: 'Falha ao verificar o like na foto da comunidade.' });
     }
 });
 

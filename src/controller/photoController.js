@@ -131,7 +131,38 @@ async function likePhoto(touristId, photoId) {
             .query('SELECT COUNT(*) AS count FROM [Like] WHERE photo_id = @photoId AND tourist_id = @touristId');
 
         if (existingLike.recordset[0].count > 0) {
-            throw new Error('O turista já curtiu esta foto.');
+            // Remove o like anterior se já existir
+            await pool.request()
+                .input('photoId', sql.Int, photoId)
+                .input('touristId', sql.Int, touristId)
+                .query('DELETE FROM [Like] WHERE photo_id = @photoId AND tourist_id = @touristId');
+
+            // Atualiza o número de likes na tabela Community (subtrai 1 do número de likes)
+            await pool.request()
+                .input('photoId', sql.Int, photoId)
+                .query('UPDATE Community SET photo_likes = photo_likes - 1 WHERE photo_id = @photoId');
+
+            // Obtém o número atualizado de likes da foto
+            let updatedLikesResult = await pool.request()
+                .input('photoId', sql.Int, photoId)
+                .query('SELECT photo_likes FROM Community WHERE photo_id = @photoId');
+
+            let updatedLikes = updatedLikesResult.recordset[0].photo_likes;
+
+            // Obtém o email do turista
+            let touristEmailResult = await pool.request()
+                .input('touristId', sql.Int, touristId)
+                .query('SELECT email FROM Tourist WHERE id = @touristId');
+
+            let touristEmail = touristEmailResult.recordset[0].email;
+
+            return {
+                message: `Like removido com sucesso pelo turista ${touristEmail} da foto da comunidade ${photoId}, que agora tem ${updatedLikes} likes.`,
+                tourist_id: touristId,
+                photo_id: photoId,
+                likes: updatedLikes,
+                like: false
+            };
         }
         else {
             // Adiciona uma nova entrada à tabela Like
@@ -162,7 +193,8 @@ async function likePhoto(touristId, photoId) {
                 message: `Like adicionado com sucesso pelo turista ${touristEmail} à foto da comunidade ${photoId}, que agora tem ${updatedLikes} likes.`,
                 tourist_id: touristId,
                 photo_id: photoId,
-                likes: updatedLikes
+                likes: updatedLikes,
+                like: true
             };
         }
 
@@ -172,7 +204,7 @@ async function likePhoto(touristId, photoId) {
     }
 }
 
-async function removeLike(touristId, photoId) {
+async function checkIfLikedPhoto(touristId, photoId) {
     try {
         let pool = await sql.connect(config);
 
@@ -182,46 +214,11 @@ async function removeLike(touristId, photoId) {
             .input('touristId', sql.Int, touristId)
             .query('SELECT COUNT(*) AS count FROM [Like] WHERE photo_id = @photoId AND tourist_id = @touristId');
 
-        if (existingLike.recordset[0].count === 0) {
-            throw new Error('O turista ainda não curtiu esta foto.');
-        }
-        else {
-            // Remove a entrada da tabela Like
-            await pool.request()
-                .input('photoId', sql.Int, photoId)
-                .input('touristId', sql.Int, touristId)
-                .query('DELETE FROM [Like] WHERE photo_id = @photoId AND tourist_id = @touristId');
-
-            // Atualiza o número de likes na tabela Community
-            await pool.request()
-                .input('photoId', sql.Int, photoId)
-                .query('UPDATE Community SET photo_likes = photo_likes - 1 WHERE photo_id = @photoId');
-
-            // Obtém o número atualizado de likes da foto
-            let updatedLikesResult = await pool.request()
-                .input('photoId', sql.Int, photoId)
-                .query('SELECT photo_likes FROM Community WHERE photo_id = @photoId');
-
-            let updatedLikes = updatedLikesResult.recordset[0].photo_likes;
-
-            // Obtém o email do turista
-            let touristEmailResult = await pool.request()
-                .input('touristId', sql.Int, touristId)
-                .query('SELECT email FROM Tourist WHERE id = @touristId');
-
-            let touristEmail = touristEmailResult.recordset[0].email;
-
-            return {
-                message: `Like removido com sucesso pelo turista ${touristEmail} da foto da comunidade ${photoId}, que agora tem ${updatedLikes} likes.`,
-                tourist_id: touristId,
-                photo_id: photoId,
-                likes: updatedLikes
-            };
-        }
-
+        // Retorna true se o like existe, false caso contrário
+        return existingLike.recordset[0].count > 0;
     } catch (error) {
         console.log(error);
-        throw new Error('Falha ao remover o like.');
+        throw new Error('Falha ao verificar o like.');
     }
 }
 
@@ -230,5 +227,5 @@ module.exports = {
     getGallery: getGallery,
     getCommunity: getCommunity,
     likePhoto: likePhoto,
-    removeLike: removeLike
+    checkIfLikedPhoto: checkIfLikedPhoto
 }
