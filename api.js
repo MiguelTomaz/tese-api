@@ -15,6 +15,8 @@ const userRoute = require('./src/routes/user');
 const questionsRoute = require('./src/routes/questions');
 const quizRoute = require('./src/routes/quiz');
 const photoRoute = require('./src/routes/photo');
+const route = require('./src/routes/route');
+
 
 var app = express();
 app.use(bodyParser.json({limit: '50000000000mb'}));
@@ -31,6 +33,7 @@ app.use('/api/user', userRoute);
 app.use('/api/questions', questionsRoute);
 app.use('/api/quiz', quizRoute);
 app.use('/api/photo', photoRoute);
+app.use('/api/route', route);
 /**
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
