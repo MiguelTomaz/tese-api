@@ -222,10 +222,93 @@ async function checkIfLikedPhoto(touristId, photoId) {
     }
 }
 
+async function getLeaderboard() {
+    try {
+        let pool = await sql.connect(config);
+
+        // Calcula o peso para cada turista
+        let result = await pool.request().query(`
+        SELECT TOP 3
+                tourist_id,
+                SUM(photo_count) AS photo_count,
+                SUM(quiz_score) AS quiz_score,
+                SUM(poi_visited) AS poi_visited
+            FROM (
+                SELECT 
+                    Tourist.id AS tourist_id,
+                    COUNT(Gallery.tourist_id) AS photo_count,
+                    0 AS quiz_score,
+                    0 AS poi_visited
+                FROM 
+                    Tourist
+                LEFT JOIN 
+                    Gallery ON Tourist.id = Gallery.tourist_id
+                GROUP BY 
+                    Tourist.id
+
+                UNION ALL
+
+                SELECT 
+                    Tourist.id AS tourist_id,
+                    0 AS photo_count,
+                    SUM(ISNULL(Quiz.score, 0)) AS quiz_score,
+                    poi_visited
+                FROM 
+                    Tourist
+                LEFT JOIN 
+                    Quiz ON Tourist.id = Quiz.tourist_id
+                GROUP BY 
+                    Tourist.id, poi_visited
+            ) AS combined
+            GROUP BY 
+                tourist_id
+                ORDER BY 
+                (SUM(poi_visited) * 0.4) DESC, (SUM(quiz_score) * 0.3) DESC, (SUM(photo_count) * 0.3) DESC;
+`);
+
+        if (result.recordset.length > 0) {
+            let leaderboard = await Promise.all(result.recordset.map(async entry => {
+                // Consulta o email do turista usando o ID
+                let emailResult = await pool.request().input('tourist_id', entry.tourist_id).query(`
+                    SELECT email
+                    FROM Tourist
+                    WHERE id = @tourist_id
+                `);
+                // Verifica se encontrou um email
+                if (emailResult.recordset.length > 0) {
+                    // Retorna um objeto combinando os dados originais com o email
+                    return {
+                        tourist_id: entry.tourist_id,
+                        photo_count: entry.photo_count,
+                        quiz_score: entry.quiz_score,
+                        poi_visited: entry.poi_visited,
+                        email: emailResult.recordset[0].email // Adiciona o email ao objeto
+                    };
+                } else {
+                    // Se não encontrar um email, retorna apenas os dados originais
+                    return {
+                        tourist_id: entry.tourist_id,
+                        photo_count: entry.photo_count,
+                        quiz_score: entry.quiz_score,
+                        poi_visited: entry.poi_visited
+                    };
+                }
+            }));
+            return leaderboard;
+        } else {
+            throw new Error('Failed to fetch leaderboard: no data found.');
+        }
+    } catch (error) {
+        console.log(error);
+        throw new Error('Failed to fetch leaderboard.');
+    }
+}
+
 module.exports = {
     addPhoto: addPhoto,
     getGallery: getGallery,
     getCommunity: getCommunity,
     likePhoto: likePhoto,
-    checkIfLikedPhoto: checkIfLikedPhoto
+    checkIfLikedPhoto: checkIfLikedPhoto,
+    getLeaderboard: getLeaderboard
 }

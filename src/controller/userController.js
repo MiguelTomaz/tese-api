@@ -80,6 +80,42 @@ async function verifyUserCredentials(email, password) {
     }
 }
 
+async function getPoiVisitedByTouristId(touristId) {
+    try {
+        let pool = await sql.connect(config);
+        let result = await pool.request()
+            .input('touristId', sql.Int, touristId)
+            .query('SELECT poi_visited FROM Tourist WHERE id = @touristId');
+
+        if (result.recordset.length > 0) {
+            return result.recordset[0].poi_visited;
+        } else {
+            throw new Error('No tourist found with the given ID.');
+        }
+    } catch (error) {
+        console.log(error);
+        throw new Error('Failed to get poi_visited for the tourist.');
+    }
+}
+
+async function getPhotoTakenByTouristId(touristId) {
+    try {
+        let pool = await sql.connect(config);
+        let result = await pool.request()
+            .input('touristId', sql.Int, touristId)
+            .query('SELECT COUNT(*) AS photo_count FROM Gallery WHERE tourist_id = @touristId');
+
+        if (result.recordset.length > 0) {
+            return result.recordset[0].photo_count;
+        } else {
+            throw new Error('No photos found for the tourist.');
+        }
+    } catch (error) {
+        console.error(error);
+        throw new Error('Failed to fetch photo count for the tourist.');
+    }
+}
+
 
 //userController.getUsers = getUsers();
 /**
@@ -125,5 +161,7 @@ module.exports = {
     getUsers: getUsers,
     addUser: addUser,
     loginUser: loginUser,
-    verifyUserCredentials: verifyUserCredentials
+    verifyUserCredentials: verifyUserCredentials,
+    getPoiVisitedByTouristId: getPoiVisitedByTouristId,
+    getPhotoTakenByTouristId: getPhotoTakenByTouristId
 }

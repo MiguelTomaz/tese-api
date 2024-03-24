@@ -87,4 +87,24 @@ router.route('/community/like/check').post(async (req, res) => {
     }
 });
 
+router.route('/ranking').get(async (req, res) => {
+
+    
+    try {
+        const leaderboardData   = await photoController.getLeaderboard();
+        if (leaderboardData.length > 0) {
+            res.status(200).json({ leaderboard: leaderboardData });
+        } else {
+            res.status(404).json({ error: 'Nenhum dado encontrado para o ranking.' });
+        }
+    } catch (error) {
+        console.error(error);
+        if (error instanceof Error && error.message === 'Failed to fetch leaderboard: no data found.') {
+            res.status(404).json({ error: 'Nenhum dado encontrado para o ranking.' });
+        } else {
+            res.status(500).json({ error: 'Falha ao buscar o ranking.' });
+        }
+    }
+});
+
 module.exports = router;

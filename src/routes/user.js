@@ -82,4 +82,30 @@ router.route('/login').get(async (request, response) => {
     }
 });
 
+router.route('/poi_visited/:id').get(async (req, res) => {
+    const touristId = req.params.id;
+
+    try {
+        const poiVisited = await userController.getPoiVisitedByTouristId(touristId);
+        res.json({ poi_visited: poiVisited });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to get poi_visited for the tourist.' });
+    }
+});
+
+router.route('/photo_count/:id').get(async (req, res) => {
+    const touristId = req.params.id;
+
+    try {
+        const poiVisited = await userController.getPhotoTakenByTouristId(touristId);
+        res.json({ photo_count: poiVisited });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to get photo_count for the tourist.' });
+    }
+});
+
+
+
 module.exports = router;
