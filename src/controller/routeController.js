@@ -15,6 +15,38 @@ async function getRoutes() {
     }
 }
 
+async function getRouteDetails(routeId) {
+    try {
+        let pool = await sql.connect(config);
+
+        // Obter detalhes da rota
+        let routeResult = await pool.request()
+            .input('routeId', sql.Int, routeId)
+            .query('SELECT * FROM Route WHERE id = @routeId');
+
+        let route = routeResult.recordset[0];
+
+        // Obter lista de POI da rota
+        let poiResult = await pool.request()
+            .input('routeId', sql.Int, routeId)
+            .query('SELECT * FROM POI WHERE route_id = @routeId');
+
+        let poiList = poiResult.recordset;
+
+        // Combinar detalhes da rota e lista de POI
+        let routeDetails = {
+            route: route,
+            poiList: poiList
+        };
+
+        return routeDetails;
+    } catch (error) {
+        console.log(error);
+        throw new Error('Failed to fetch route details.');
+    }
+}
+
 module.exports = {
-    getRoutes: getRoutes
+    getRoutes: getRoutes,
+    getRouteDetails: getRouteDetails
 }

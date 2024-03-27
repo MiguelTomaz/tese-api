@@ -23,4 +23,18 @@ router.route('/all').get(async (req, res) => {
     }
 });
 
+router.route('/details/:id').get(async (req, res) => {
+    const routeId = req.params.id;
+
+    try {
+        // Obter detalhes da rota
+        const routeDetails = await routeController.getRouteDetails(routeId);
+
+        res.status(200).json(routeDetails);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to fetch route details.' });
+    }
+});
+
 module.exports = router;
