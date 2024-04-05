@@ -15,7 +15,7 @@ router.route('/users').get((request,response)=>{
     })
 })
 
-router.route('/users').post((request,response)=>{
+router.route('/add').post((request,response)=>{
 
     const { email, password } = request.body; // Assume que os dados são enviados no corpo da requisição
 

@@ -23,7 +23,7 @@ async function addUser(user) {
         let insertUser = await pool.request()
             .input('email', sql.NVarChar, user.email)
             .input('password', sql.NVarChar, user.password)
-            .query('INSERT INTO [User] (email, password) VALUES (@email, @password)');
+            .query('INSERT INTO [Tourist] (email, password, poi_visited) VALUES (@email, @password, 0)');
         return insertUser.recordsets;
     }
     catch (err) {
