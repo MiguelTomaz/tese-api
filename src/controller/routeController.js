@@ -4,10 +4,25 @@ const sql = require("mssql");
 var config = require('../../dbconfig');
 
 
-async function getRoutes() {
+async function getAllRoutes() {
     try {
         let pool = await sql.connect(config);
         let routes = await pool.request().query("SELECT * from [Route]");
+        return routes.recordsets;
+    } catch (error) {
+        console.log(error);
+        throw new Error('Failed to fetch routes.');
+    }
+}
+
+async function getRoutes(touristId = null) {
+    try {
+        let pool = await sql.connect(config);
+        let query = "SELECT * FROM [Route]";
+        if (touristId !== null) {
+            query += ` WHERE created IS NULL OR created = ${touristId}`;
+        }
+        let routes = await pool.request().query(query);
         return routes.recordsets;
     } catch (error) {
         console.log(error);
@@ -136,6 +151,7 @@ async function getRouteDetails(routeId) {
 }
 
 module.exports = {
+    getAllRoutes: getAllRoutes,
     getRoutes: getRoutes,
     getPoiList: getPoiList,
     getRouteDetails: getRouteDetails,
