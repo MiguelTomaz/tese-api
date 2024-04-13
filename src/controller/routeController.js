@@ -19,7 +19,7 @@ async function getPoiList() {
     try {
         let pool = await sql.connect(config);
         let poi_list = await pool.request().query("SELECT * from [POI]");
-        return poi_list.recordsets;
+        return poi_list.recordsets[0];
     } catch (error) {
         console.log(error);
         throw new Error('Failed to fetch poi_list.');
