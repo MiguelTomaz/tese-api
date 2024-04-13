@@ -113,6 +113,28 @@ router.route('/addPoiToRoute').post(async (req, res) => {
     }
 });
 
+router.route('/touristic-route/add').post(async (req, res) => {
+    const { route_id, tourist_id } = req.body; // Certifique-se de que os dados são enviados no corpo da solicitação
+
+    try {
+        // Verifique se os dados necessários foram fornecidos
+        if (!route_id || !tourist_id) {
+            return res.status(400).json({ error: 'Parâmetros route_id e tourist_id são obrigatórios.' });
+        }
+
+        // Adicione a rota turística
+        const { success, message, touristicRouteId }  = await routeController.addTouristicRoute(route_id, tourist_id);
+        if (success) {
+            res.status(200).json({ success: true, message: message, touristicRouteId: touristicRouteId });
+        } else {
+            res.status(500).json({ error: 'Falha ao adicionar touristic route' });
+        }
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ error: 'Falha ao adicionar rota turística.' });
+    }
+});
+
 
 router.route('/details/:id').get(async (req, res) => {
     const routeId = req.params.id;

@@ -118,6 +118,26 @@ async function addPoiToRoute(route_id, order_in_route, id) {
     }
 }
 
+async function addTouristicRoute(routeId, touristId) {
+    try {
+        let pool = await sql.connect(config);
+        let result = await pool.request()
+            .input('routeId', sql.Int, routeId)
+            .input('touristId', sql.Int, touristId)
+            .query('INSERT INTO Touristic_Route (route_id, tourist_id) VALUES (@routeId, @touristId); SELECT SCOPE_IDENTITY() AS TouristicRouteId');
+        
+        // Verifique se a inserção foi bem-sucedida
+        if (result.rowsAffected && result.rowsAffected[0] > 0) {
+            const touristicRouteId = result.recordset[0].TouristicRouteId;
+            return { success: true, message: 'touristic route adicionada', touristicRouteId: touristicRouteId };
+        } else {
+            throw new Error('Failed to add touristic route.');
+        }
+    } catch (error) {
+        console.error(error);
+        throw new Error('Falha ao adicionar rota turística.');
+    }
+}
 
 async function getRouteDetails(routeId) {
     try {
@@ -156,5 +176,6 @@ module.exports = {
     getPoiList: getPoiList,
     getRouteDetails: getRouteDetails,
     addRouteFromTourist: addRouteFromTourist,
-    addPoiToRoute: addPoiToRoute
+    addPoiToRoute: addPoiToRoute,
+    addTouristicRoute: addTouristicRoute
 }
