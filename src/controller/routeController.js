@@ -87,7 +87,6 @@ async function addPoiToRoute(route_id, order_in_route, id) {
             .input('rating', sql.Int, poiData.rating)
             .input('city', sql.NVarChar(255), poiData.city)
             .input('image', sql.NVarChar(sql.MAX), poiData.image)
-            .input('image', sql.NVarChar(sql.MAX), poiData.image)
             .input('copy', sql.Int, 1)
             .query('INSERT INTO [POI] (route_id, name, description, order_in_route, category, latitude, longitude, altitude, creator_name, architectural_style, website, rating, city, image, copy) VALUES (@route_id, @name, @description, @order_in_route, @category, @latitude, @longitude, @altitude, @creator_name, @architectural_style, @website, @rating, @city, @image, @copy); SELECT SCOPE_IDENTITY() AS NewPOIId');
 
