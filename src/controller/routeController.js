@@ -15,6 +15,17 @@ async function getRoutes() {
     }
 }
 
+async function getPoiList() {
+    try {
+        let pool = await sql.connect(config);
+        let poi_list = await pool.request().query("SELECT * from [POI]");
+        return poi_list.recordsets;
+    } catch (error) {
+        console.log(error);
+        throw new Error('Failed to fetch poi_list.');
+    }
+}
+
 async function addRouteFromTourist(name, city, category, created) {
     try {
         let pool = await sql.connect(config);
@@ -123,6 +134,7 @@ async function getRouteDetails(routeId) {
 
 module.exports = {
     getRoutes: getRoutes,
+    getPoiList: getPoiList,
     getRouteDetails: getRouteDetails,
     addRouteFromTourist: addRouteFromTourist,
     addPoiToRoute: addPoiToRoute

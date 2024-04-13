@@ -23,6 +23,24 @@ router.route('/all').get(async (req, res) => {
     }
 });
 
+router.route('/poi/all').get(async (req, res) => {
+    try {
+        const poi_list  = await routeController.getPoiList();
+        if (poi_list.length > 0) {
+            res.status(200).json({ poi_list: poi_list });
+        } else {
+            res.status(404).json({ error: 'Nenhum poi' });
+        }
+    } catch (error) {
+        console.error(error);
+        if (error instanceof Error && error.message === 'Failed to fetch routes: no data found.') {
+            res.status(404).json({ error: 'Nenhum dado encontrado para o routes.' });
+        } else {
+            res.status(500).json({ error: 'Falha ao buscar o routes.' });
+        }
+    }
+});
+
 router.route('/add').post(async (req, res) => {
     try {
         const { name, city, category, created } = req.body;
