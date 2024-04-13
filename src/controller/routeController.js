@@ -85,7 +85,8 @@ async function addPoiToRoute(route_id, order_in_route, id) {
             .input('website', sql.NVarChar(255), poiData.website)
             .input('opening_hours', sql.NVarChar(255), poiData.opening_hours)
             .input('rating', sql.Int, poiData.rating)
-            .query('INSERT INTO [POI] (route_id, name, description, order_in_route, category, latitude, longitude, altitude, creator_name, architectural_style, website, rating) VALUES (@route_id, @name, @description, @order_in_route, @category, @latitude, @longitude, @altitude, @creator_name, @architectural_style, @website, @rating); SELECT SCOPE_IDENTITY() AS NewPOIId');
+            .input('city', sql.NVarChar(255), poiData.city)
+            .query('INSERT INTO [POI] (route_id, name, description, order_in_route, category, latitude, longitude, altitude, creator_name, architectural_style, website, rating, city) VALUES (@route_id, @name, @description, @order_in_route, @category, @latitude, @longitude, @altitude, @creator_name, @architectural_style, @website, @rating, @city); SELECT SCOPE_IDENTITY() AS NewPOIId');
 
         // Verifica se a inserção foi bem-sucedida
         if (insertResult.recordset && insertResult.recordset.length > 0) {
