@@ -19,7 +19,7 @@ async function createQuiz(touristId) {
 
         // Obter 3 perguntas aleatórias da tabela Questions
         let questions = await pool.request()
-            .query('SELECT TOP 2 * FROM Questions ORDER BY NEWID();');
+            .query('SELECT TOP 10 * FROM Questions ORDER BY NEWID();');
 
         // Criar associação entre o quiz e as perguntas na tabela Quiz_Question_Association
         for (const question of questions.recordset) {
