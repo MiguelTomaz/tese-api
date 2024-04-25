@@ -106,6 +106,27 @@ router.route('/photo_count/:id').get(async (req, res) => {
     }
 });
 
+router.route('/rating/route').post(async (request, response) => {
+    const { tourist_id, route_id, rating } = request.body;
+
+    if (!tourist_id || !route_id || !rating) {
+        return response.status(400).json({ error: 'tourist_id, route_id e rating são obrigatórios: ' + JSON.stringify(request.body) });
+    }
+
+    try {
+        const result = await userController.addRatingRoute({ tourist_id, route_id, rating });
+        //const roundedRating = result.roundedRating;
+        const operation = result.operation;
+        const totalRating = result.totalRating;
+        const totalRows = result.totalRows;
+        const averageRating = result.averageRating;
+        const roundedAverageRating = result.roundedAverageRating;
+        response.status(201).json({ message: 'Rating adicionado com sucesso.', operation: operation, sum: totalRating, totalRows: totalRows, averageRating: averageRating, roundedAverageRating: roundedAverageRating });
+    } catch (error) {
+        console.log(error);
+        response.status(500).json({ error: 'Ocorreu um erro ao adicionar o rating.' });
+    }
+});
 
 
 module.exports = router;

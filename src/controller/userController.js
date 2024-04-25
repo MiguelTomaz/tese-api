@@ -116,6 +116,60 @@ async function getPhotoTakenByTouristId(touristId) {
     }
 }
 
+async function addRatingRoute(ratingRoute) {
+    try {
+        let pool = await sql.connect(config);
+
+        // Verificar se já existe uma entrada para o turista e a rota específica
+        let checkExistingRating = await pool.request()
+            .input('tourist_id', sql.Int, ratingRoute.tourist_id)
+            .input('route_id', sql.Int, ratingRoute.route_id)
+            .query('SELECT COUNT(*) AS existingRating FROM [Rating_Route] WHERE tourist_id = @tourist_id AND route_id = @route_id');
+
+        let existingRatingCount = checkExistingRating.recordset[0].existingRating;
+
+        if (existingRatingCount > 0) {
+            // Atualizar o valor do rating se já existir uma entrada
+            let updateRating = await pool.request()
+                .input('tourist_id', sql.Int, ratingRoute.tourist_id)
+                .input('route_id', sql.Int, ratingRoute.route_id)
+                .input('rating', sql.Int, ratingRoute.rating)
+                .query('UPDATE [Rating_Route] SET rating = @rating WHERE tourist_id = @tourist_id AND route_id = @route_id');
+        } else {
+            let insertRatingRoute = await pool.request()
+            .input('tourist_id', sql.Int, ratingRoute.tourist_id)
+            .input('route_id', sql.Int, ratingRoute.route_id)
+            .input('rating', sql.Int, ratingRoute.rating)
+            .query('INSERT INTO [Rating_Route] (tourist_id, route_id, rating) VALUES (@tourist_id, @route_id, @rating)');
+        }
+
+            
+            // Calcular a soma dos ratings após a inserção do novo rating
+            let calculateTotalRating = await pool.request()
+            .input('route_id', sql.Int, ratingRoute.route_id)
+            .query('SELECT SUM(rating) AS totalRating FROM [Rating_Route] WHERE route_id = @route_id');
+
+            // Calcular o total de linhas onde route_id é igual ao ID da rota
+            let calculateTotalRows = await pool.request()
+            .input('route_id', sql.Int, ratingRoute.route_id)
+            .query('SELECT COUNT(*) AS totalRows FROM [Rating_Route] WHERE route_id = @route_id');
+
+            // Calcular a média
+            let averageRating = calculateTotalRows.recordset[0].totalRows > 0 ? calculateTotalRating.recordset[0].totalRating / calculateTotalRows.recordset[0].totalRows : 0;
+            let roundedAverageRating = Math.round(averageRating);
+
+            // Atualizar o campo "rating" na tabela "Route"
+            await pool.request()
+            .input('route_id', sql.Int, ratingRoute.route_id)
+            .input('roundedAverageRating', sql.Int, roundedAverageRating)
+            .query('UPDATE [Route] SET rating = @roundedAverageRating WHERE id = @route_id');
+
+           return { operation: existingRatingCount > 0 ? 'update rating' : 'insert rating', totalRating: calculateTotalRating.recordset[0].totalRating, totalRows: calculateTotalRows.recordset[0].totalRows, averageRating: averageRating, roundedAverageRating: roundedAverageRating };
+        } catch (err) {
+        console.log(err);
+    }
+}
+
 
 //userController.getUsers = getUsers();
 /**
@@ -163,5 +217,6 @@ module.exports = {
     loginUser: loginUser,
     verifyUserCredentials: verifyUserCredentials,
     getPoiVisitedByTouristId: getPoiVisitedByTouristId,
-    getPhotoTakenByTouristId: getPhotoTakenByTouristId
+    getPhotoTakenByTouristId: getPhotoTakenByTouristId,
+    addRatingRoute: addRatingRoute
 }
