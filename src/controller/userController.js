@@ -170,6 +170,101 @@ async function addRatingRoute(ratingRoute) {
     }
 }
 
+async function addRatingPOI(ratingPOI) {
+    try {
+        let pool = await sql.connect(config);
+
+        // Verificar se já existe uma entrada para o turista e a rota específica
+        let checkExistingRating = await pool.request()
+            .input('tourist_id', sql.Int, ratingPOI.tourist_id)
+            .input('poi_id', sql.Int, ratingPOI.poi_id)
+            .query('SELECT COUNT(*) AS existingRating FROM [Rating_POI] WHERE tourist_id = @tourist_id AND poi_id = @poi_id');
+
+        let existingRatingCount = checkExistingRating.recordset[0].existingRating;
+
+        if (existingRatingCount > 0) {
+            // Atualizar o valor do rating se já existir uma entrada
+            let updateRating = await pool.request()
+                .input('tourist_id', sql.Int, ratingPOI.tourist_id)
+                .input('poi_id', sql.Int, ratingPOI.poi_id)
+                .input('rating', sql.Int, ratingPOI.rating)
+                .query('UPDATE [Rating_POI] SET rating = @rating WHERE tourist_id = @tourist_id AND poi_id = @poi_id');
+        } else {
+            let insertRatingPOI = await pool.request()
+            .input('tourist_id', sql.Int, ratingPOI.tourist_id)
+            .input('poi_id', sql.Int, ratingPOI.poi_id)
+            .input('rating', sql.Int, ratingPOI.rating)
+            .query('INSERT INTO [Rating_POI] (tourist_id, poi_id, rating) VALUES (@tourist_id, @poi_id, @rating)');
+        }
+
+            
+            // Calcular a soma dos ratings após a inserção do novo rating
+            let calculateTotalRating = await pool.request()
+            .input('poi_id', sql.Int, ratingPOI.poi_id)
+            .query('SELECT SUM(rating) AS totalRating FROM [Rating_POI] WHERE poi_id = @poi_id');
+
+            // Calcular o total de linhas onde poi_id é igual ao ID da rota
+            let calculateTotalRows = await pool.request()
+            .input('poi_id', sql.Int, ratingPOI.poi_id)
+            .query('SELECT COUNT(*) AS totalRows FROM [Rating_POI] WHERE poi_id = @poi_id');
+
+            // Calcular a média
+            let averageRating = calculateTotalRows.recordset[0].totalRows > 0 ? calculateTotalRating.recordset[0].totalRating / calculateTotalRows.recordset[0].totalRows : 0;
+            let roundedAverageRating = Math.round(averageRating);
+
+            // Atualizar o campo "rating" na tabela "poi"
+            await pool.request()
+            .input('poi_id', sql.Int, ratingPOI.poi_id)
+            .input('roundedAverageRating', sql.Int, roundedAverageRating)
+            .query('UPDATE [POI] SET rating = @roundedAverageRating WHERE id = @poi_id');
+
+           return { operation: existingRatingCount > 0 ? 'update rating' : 'insert rating', totalRating: calculateTotalRating.recordset[0].totalRating, totalRows: calculateTotalRows.recordset[0].totalRows, averageRating: averageRating, roundedAverageRating: roundedAverageRating };
+        } catch (err) {
+        console.log(err);
+    }
+}
+
+
+async function getRatingRoute(routeId) {
+    try {
+        let pool = await sql.connect(config);
+
+        // Consultar o valor de rating na tabela Route com base no ID fornecido
+        let result = await pool.request()
+            .input('route_id', sql.Int, routeId)
+            .query('SELECT rating FROM Route WHERE id = @route_id');
+
+            if (result.recordset.length === 0 || result.recordset[0].rating === null) {
+                return -1;
+            }
+        // Retornar o valor de rating
+        return result.recordset[0].rating;
+    } catch (err) {
+        console.log(err);
+        return null;
+    }
+}
+
+async function getRatingPOI(poiId) {
+    try {
+        let pool = await sql.connect(config);
+
+        // Consultar o valor de rating na tabela Route com base no ID fornecido
+        let result = await pool.request()
+            .input('poi_id', sql.Int, poiId)
+            .query('SELECT rating FROM POI WHERE id = @poi_id');
+
+            if (result.recordset.length === 0 || result.recordset[0].rating === null) {
+                return -1;
+            }
+        // Retornar o valor de rating
+        return result.recordset[0].rating;
+    } catch (err) {
+        console.log(err);
+        return null;
+    }
+}
+
 
 //userController.getUsers = getUsers();
 /**
@@ -218,5 +313,8 @@ module.exports = {
     verifyUserCredentials: verifyUserCredentials,
     getPoiVisitedByTouristId: getPoiVisitedByTouristId,
     getPhotoTakenByTouristId: getPhotoTakenByTouristId,
-    addRatingRoute: addRatingRoute
+    addRatingRoute: addRatingRoute,
+    addRatingPOI: addRatingPOI,
+    getRatingRoute: getRatingRoute,
+    getRatingPOI: getRatingPOI
 }

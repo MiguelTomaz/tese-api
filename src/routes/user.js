@@ -128,5 +128,69 @@ router.route('/rating/route').post(async (request, response) => {
     }
 });
 
+router.route('/rating/poi').post(async (request, response) => {
+    const { tourist_id, poi_id, rating } = request.body;
+
+    if (!tourist_id || !poi_id || !rating) {
+        return response.status(400).json({ error: 'tourist_id, poi_id e rating são obrigatórios: ' + JSON.stringify(request.body) });
+    }
+
+    try {
+        const result = await userController.addRatingPOI({ tourist_id, poi_id, rating });
+        //const roundedRating = result.roundedRating;
+        const operation = result.operation;
+        const totalRating = result.totalRating;
+        const totalRows = result.totalRows;
+        const averageRating = result.averageRating;
+        const roundedAverageRating = result.roundedAverageRating;
+        response.status(201).json({ message: 'Rating adicionado com sucesso.', operation: operation, sum: totalRating, totalRows: totalRows, averageRating: averageRating, roundedAverageRating: roundedAverageRating });
+    } catch (error) {
+        console.log(error);
+        response.status(500).json({ error: 'Ocorreu um erro ao adicionar o rating.' });
+    }
+});
+
+router.route('/rating/route/get/:routeId').get(async (request, response) => {
+    try {
+        const routeId = request.params.routeId;
+
+        // Chame o método getRatingRoute para obter a classificação da rota
+        const rating = await userController.getRatingRoute(routeId);
+
+        // Se a classificação existir, retorne-a como resposta JSON
+        if (rating !== null) {
+            response.json({ rating: rating });
+        } else {
+            // Se a classificação não existir (por exemplo, rota não encontrada), retorne 404
+            response.status(404).json({ error: 'Rota não encontrada' });
+        }
+    } catch (error) {
+        console.log(error);
+        // Se ocorrer algum erro inesperado, retorne 500
+        response.status(500).json({ error: 'Erro interno do servidor' });
+    }
+});
+
+router.route('/rating/poi/get/:poiId').get(async (request, response) => {
+    try {
+        const poiId = request.params.poiId;
+
+        // Chame o método getRatingRoute para obter a classificação da rota
+        const rating = await userController.getRatingPOI(poiId);
+
+        // Se a classificação existir, retorne-a como resposta JSON
+        if (rating !== null) {
+            response.json({ rating: rating });
+        } else {
+            // Se a classificação não existir (por exemplo, rota não encontrada), retorne 404
+            response.status(404).json({ error: 'POI não encontrada' });
+        }
+    } catch (error) {
+        console.log(error);
+        // Se ocorrer algum erro inesperado, retorne 500
+        response.status(500).json({ error: 'Erro interno do servidor' });
+    }
+});
+
 
 module.exports = router;
