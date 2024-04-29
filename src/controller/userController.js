@@ -265,6 +265,40 @@ async function getRatingPOI(poiId) {
     }
 }
 
+async function addPoiToUser(userId) {
+    try {
+        let pool = await sql.connect(config);
+
+        // Primeiro, vamos buscar o valor atual do campo poi_visited
+        let getUserPoiVisited = await pool.request()
+            .input('userId', sql.Int, userId)
+            .query('SELECT ISNULL(poi_visited, 0) AS poi_visited FROM [Tourist] WHERE id = @userId');
+
+        // Verificando se o usuário existe
+        if (getUserPoiVisited.recordset.length === 0) {
+            throw new Error("Usuário não encontrado.");
+        }
+
+        // Obtendo o valor atual do campo poi_visited
+        let currentPoiVisited = getUserPoiVisited.recordset[0].poi_visited;
+
+        // Adicionando 1 ao valor atual
+        let updatedPoiVisited = currentPoiVisited + 1;
+
+        // Atualizando o valor do campo poi_visited no banco de dados
+        let updatePoiVisited = await pool.request()
+            .input('userId', sql.Int, userId)
+            .input('poiVisited', sql.Int, updatedPoiVisited)
+            .query('UPDATE [Tourist] SET poi_visited = @poiVisited WHERE id = @userId');
+
+        // Retornando o novo valor de poi_visited
+        return updatedPoiVisited;
+    }
+    catch (err) {
+        console.log(err);
+    }
+}
+
 
 //userController.getUsers = getUsers();
 /**
@@ -316,5 +350,6 @@ module.exports = {
     addRatingRoute: addRatingRoute,
     addRatingPOI: addRatingPOI,
     getRatingRoute: getRatingRoute,
-    getRatingPOI: getRatingPOI
+    getRatingPOI: getRatingPOI,
+    addPoiToUser: addPoiToUser
 }

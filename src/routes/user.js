@@ -15,6 +15,17 @@ router.route('/users').get((request,response)=>{
     })
 })
 
+router.put('/addPoi/:userId', async (req, res) => {
+    try {
+        const userId = req.params.userId;
+        const updatedPoiVisited = await userController.addPoiToUser(userId);
+        res.json({ poi_visited: updatedPoiVisited });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Erro ao adicionar ponto de interesse ao usuário.' });
+    }
+});
+
 router.route('/add').post((request,response)=>{
 
     const { email, password } = request.body; // Assume que os dados são enviados no corpo da requisição
